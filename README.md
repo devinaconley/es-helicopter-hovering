@@ -1,2 +1,2 @@
-# es-helicopter-hovering
-Evolutionary Strategies for Helicopter Hovering
+# es-keras
+Evolutionary Strategies for training a keras model

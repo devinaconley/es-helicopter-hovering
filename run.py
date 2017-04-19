@@ -1,10 +1,13 @@
-# es-helicopter-hovering
+# es-keras
 # Driver script
 
 # lib
 import argparse
 import gym
-
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense, Activation
+from keras.utils import serialize_keras_object
 # src
 from src.ESTrainer import ESTrainer
 
@@ -16,12 +19,20 @@ def main( ) :
 	# setup environment
 	env = gym.make( args['environment'] )
 	obs = env.reset( )
-	done = False
 
-	while not done :
-		env.render()
-		action = env.action_space.sample()
-		obs, reward, done, info = env.step( action )
+	print( env.action_space.n )
+	print( obs.shape )
+
+	# setup original model
+	model = Sequential( )
+	model.add( Dense( env.action_space.n, input_shape=obs.shape ) )
+	# model.add( Activation( 'relu' ) )
+
+	# evolutionary-strategies
+	es = ESTrainer( model, env )
+	es.Train( population=100, episodes=1 )
+
+	return
 
 # Command Line Arguments
 def ParseArguments( ) :

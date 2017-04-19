@@ -17,8 +17,14 @@ dependencies:
 - pip:
   - box2d==2.3.1
   - gym==0.8.1
+  - keras==2.0.3
   - numpy==1.12.1
+  - protobuf==3.2.0
   - pyglet==1.2.4
+  - pyyaml==3.12
   - requests==2.13.0
+  - scipy==0.19.0
   - six==1.10.0
+  - tensorflow==1.0.1
+prefix: /home/devin/miniconda3/envs/es-keras
 
