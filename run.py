@@ -20,17 +20,15 @@ def main( ) :
 	env = gym.make( args['environment'] )
 	obs = env.reset( )
 
-	print( env.action_space.n )
-	print( obs.shape )
-
 	# setup original model
 	model = Sequential( )
-	model.add( Dense( env.action_space.n, input_shape=obs.shape ) )
+	model.add( Dense( env.action_space.n, input_shape=obs.shape,
+					  kernel_initializer='random_normal', use_bias=False ) )
 	# model.add( Activation( 'relu' ) )
 
 	# evolutionary-strategies
 	es = ESTrainer( model, env )
-	es.Train( population=100, episodes=1 )
+	es.Train( iterations=200, render=True )
 
 	return
 
