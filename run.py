@@ -10,6 +10,7 @@ from keras.layers import Dense, Activation
 from keras.utils import serialize_keras_object
 # src
 from src.ESTrainer import ESTrainer
+from src.SpeciesHandler import SpeciesHandler
 
 # main
 def main( ) :
@@ -27,8 +28,12 @@ def main( ) :
 	# model.add( Activation( 'relu' ) )
 
 	# evolutionary-strategies
-	es = ESTrainer( model, env )
-	es.Train( iterations=200, render=True )
+	# es = ESTrainer( model, env )
+	# es.Train( iterations=200, render=True )
+
+	# structural learning
+	sh = SpeciesHandler( model, env )
+	sh.Train( )
 
 	return
 

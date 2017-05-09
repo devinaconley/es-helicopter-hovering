@@ -15,7 +15,8 @@ class ESTrainer :
 		for l in self.model.layers :
 			self.weights.append( l.get_weights( )[:] )
 
-	def Train( self, iterations=100, episodes=1, population=100, sigma=0.2, lr=0.00025, render=False ) :
+	def Train( self, iterations=100, episodes=1, population=100, sigma=0.2, lr=0.0003, render=False ) :
+		totalReward = 0.0
 		for i in range( iterations ) :
 			self.GeneratePopulation( population, sigma )
 			self.TestPopulation( episodes, sigma )
@@ -23,6 +24,8 @@ class ESTrainer :
 
 			print( 'Iteration: {}, average reward: {}, std reward: {}'.format(
 				i, np.mean( self.rewards ), np.std( self.rewards ) ) )
+
+			totalReward += np.mean( self.rewards )
 
 			if render :  # show debug episode of updated model
 				obs = self.env.reset( )
@@ -32,6 +35,8 @@ class ESTrainer :
 					self.env.render( )
 					action = self.model.predict_classes( np.array( [obs] ), verbose=0 )  # highest prob action from nn
 					obs, reward, done, info = self.env.step( action[0] )
+
+		return totalReward / iterations
 
 	def TestPopulation( self, episodes, sigma ) :
 		# test each variant over e episodes
