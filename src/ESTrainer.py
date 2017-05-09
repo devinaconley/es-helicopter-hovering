@@ -2,11 +2,12 @@
 
 # lib
 import numpy as np
+from keras.models import model_from_json
 
 class ESTrainer :
 	def __init__( self, model, env ) :
 		self.env = env
-		self.model = model
+		self.model = model_from_json( model.to_json() ) # deep copy
 		self.weights = []
 		self.noise = []
 		self.rewards = []
