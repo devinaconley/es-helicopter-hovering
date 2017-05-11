@@ -7,7 +7,8 @@ from keras.models import model_from_json
 class ESTrainer :
 	def __init__( self, model, env ) :
 		self.env = env
-		self.model = model_from_json( model.to_json() ) # deep copy
+		self.model = model_from_json( model.to_json( ) )  # deep copy
+		self.model.set_weights( model.get_weights( ) )
 		self.weights = []
 		self.noise = []
 		self.rewards = []
