@@ -25,7 +25,6 @@ def main( ) :
 	model = Sequential( )
 	model.add( Dense( env.action_space.n, input_shape=obs.shape,
 					  kernel_initializer='random_normal', use_bias=False ) )
-	# model.add( Activation( 'relu' ) )
 
 	# evolutionary-strategies
 	# es = ESTrainer( model, env )
@@ -33,7 +32,7 @@ def main( ) :
 
 	# structural learning
 	sh = SpeciesHandler( model, env )
-	sh.Train( )
+	sh.Train( extinctionInterval=10, numSpecies=5 )
 
 	return
 
