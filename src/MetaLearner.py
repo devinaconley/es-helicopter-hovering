@@ -25,26 +25,26 @@ class MetaLearner :
                 m = model_from_json( self.model.to_json( ) )  # deep copy
                 m.set_weights( self.model.get_weights( ) )
                 trainer = ESTrainer( m, self.env )
-                lrTemp = lr + np.random.normal(0, sigmaMeta_lr) # + noise
-                sigmaTemp = sigma + np.random.normal(0, sigmaMeta_sigma) # + noise
 
                 # test, append to metaParams
-                reward = trainer.Train(iterations=10, population=pop, sigma=sigmaTemp, lr=lrTemp, render=True)
+                reward = trainer.Train(iterations=10, population=pop, sigma=sigma, lr=lr, render=True)
                 w = trainer.model.get_weights()
-                metaParams.append([reward, lrTemp, sigmaTemp, w])
+                metaParams.append([reward, lr, sigma, w])
 
                 print("metaparams is {}".format(metaParams[-1]))
+                lr += np.random.normal(0, sigmaMeta_lr)  # + noise
+                sigma += np.random.normal(0, sigmaMeta_sigma)  # + noise
 
-            # update lr and sigma
+            # set self.model as best model, update lr and sigma with reward weighting
             max = metaParams[0][0]
-            w_new = metaParams[0][3]
+            wts = metaParams[0][-1]
             for meta in metaParams:
                 if max < meta[0]:
                     max = meta[0]
                     lr = meta[1] # + np.random.normal(0, sigmaMeta_lr) * lrMeta
                     sigma = meta[2] # + np.random.normal(0, sigmaMeta_sigma) * lrMeta
-                    w_new = meta[3]
-            self.model.set_weights(w_new)
+                    wts = meta[-1]
+            self.model.set_weights(wts)
 
             print ("max reward is {}, lr is {}, sigma is {}".format(max, lr, sigma))
 
