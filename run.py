@@ -29,8 +29,8 @@ def main( ) :
     # es.Train( iterations=200, render=True )
 
     # structural learning
-    sh = SpeciesHandler( model, env )
-    sh.Train( extinctionInterval=10, numSpecies=5 )
+    # sh = SpeciesHandler( model, env )
+    # sh.Train( extinctionInterval=10, numSpecies=5 )
 
     # Meta-Learning
     metalearner = MetaLearner(model, env)
