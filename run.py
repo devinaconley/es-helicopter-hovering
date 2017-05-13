@@ -1,6 +1,3 @@
-# es-keras
-# Driver script
-
 # lib
 import argparse
 import gym
