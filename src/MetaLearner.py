@@ -41,7 +41,7 @@ class MetaLearner :
 			bestReward = metaParams[0][0]
 			bestW = metaParams[0][3]
 			for meta in metaParams :
-				if bestReward > meta[0] :
+				if bestReward < meta[0] :
 					bestReward = meta[0]
 					bestW = meta[3]
 				# weighted update of lr and sigma
