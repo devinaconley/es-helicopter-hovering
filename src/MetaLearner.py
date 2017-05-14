@@ -14,8 +14,8 @@ class MetaLearner :
 		self.model = model_from_json( model.to_json( ) )  # deep copy
 		self.model.set_weights( model.get_weights( ) )
 
-	def Train( self, iterations=100, pop=100, lrStart=0.0003, sigmaStart=0.2,
-			   popMeta=5, lrMeta=0.00001, sigmaMeta_lr=0.00001, sigmaMeta_sigma=0.01, render=False ) :
+	def Train( self, iterations=100, pop=100, lrStart=0.0003, sigmaStart=0.2, iterationsMeta=10,
+			   popMeta=10, lrMeta=0.00001, sigmaMeta_lr=0.00001, sigmaMeta_sigma=0.02, render=False ) :
 		lr = lrStart
 		sigma = sigmaStart
 
@@ -29,12 +29,14 @@ class MetaLearner :
 				lrNoise = np.random.normal( 0, sigmaMeta_lr )  # + noise
 				sigmaNoise = np.random.normal( 0, sigmaMeta_sigma )  # + noise
 
-				print( 'candidate -- lr: {}, sigma: {}'.format(lr+lrNoise, sigma+sigmaNoise))
 				# test, append to metaParams
-				reward = trainer.Train( iterations=5, population=pop, sigma=sigma + sigmaNoise, lr=lr + lrNoise,
-										render=render )
+				reward = trainer.Train( iterations=iterationsMeta, population=pop, sigma=sigma + sigmaNoise,
+										lr=lr + lrNoise, render=render )
 				w = trainer.model.get_weights( )
 				metaParams.append( [reward, lrNoise, sigmaNoise, w] )
+
+				print( 'candidate {} -- lr: {}, sigma: {}, reward: {}'.format( len( metaParams ), lr + lrNoise,
+																			   sigma + sigmaNoise, reward ) )
 
 			# do updates
 			meanReward = sum( [x[0] for x in metaParams] ) / len( metaParams )  # to normalize
@@ -45,9 +47,10 @@ class MetaLearner :
 					bestReward = meta[0]
 					bestW = meta[3]
 				# weighted update of lr and sigma
-				lr += (lrMeta / (sigmaMeta_lr * popMeta)) * (meta[0] - meanReward ) * meta[1]
-				sigma += (lrMeta / (sigmaMeta_sigma * popMeta)) * (meta[0] - meanReward ) * meta[2]
+				lr += (lrMeta / (sigmaMeta_lr * popMeta)) * (meta[0] - meanReward) * meta[1]
+				sigma += (lrMeta / (sigmaMeta_sigma * popMeta)) * (meta[0] - meanReward) * meta[2]
 
 			self.model.set_weights( bestW )
 
-			print ("max reward is {}, lr is {}, sigma is {}".format( bestReward, lr, sigma ))
+			print( 'generations: {}, max reward is {}, lr is {}, sigma is {}'.format( i * iterationsMeta, bestReward,
+																					  lr, sigma ) )
