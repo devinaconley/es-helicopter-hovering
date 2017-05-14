@@ -19,7 +19,7 @@ class ESTrainer :
 			self.weights.append( l.get_weights( )[:] )
 
 	def Train( self, iterations=100, episodes=1, population=100, sigma=0.2, lr=0.0003, maxSteps=250,
-			   render=False, verbose=False ) :
+			   render=False, verbose=False, logFile=None ) :
 		totalReward = 0.0
 		for i in range( iterations ) :
 			self.GeneratePopulation( population, sigma )
@@ -29,6 +29,9 @@ class ESTrainer :
 			if verbose :
 				print( 'Iteration: {}, average reward: {}, std reward: {}'.format(
 					i, np.mean( self.rewards ), np.std( self.rewards ) ) )
+
+			if logFile :
+				logFile.write( 'es,{},{}\n'.format( i, np.mean( self.rewards ) ) )
 
 			totalReward += np.mean( self.rewards )
 
@@ -63,7 +66,8 @@ class ESTrainer :
 					# self.env.render( )
 					action = [0]
 					if k < maxSteps :
-						action = self.model.predict_classes( np.array( [obs] ), verbose=0 )  # highest prob action from nn
+						action = self.model.predict_classes( np.array( [obs] ),
+															 verbose=0 )  # highest prob action from nn
 					obs, reward, done, info = self.env.step( action[0] )
 					self.rewards[p] += reward
 					k += 1

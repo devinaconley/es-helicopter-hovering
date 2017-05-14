@@ -15,11 +15,14 @@ class MetaLearner :
 		self.model.set_weights( model.get_weights( ) )
 
 	def Train( self, iterations=100, pop=100, lrStart=0.0003, sigmaStart=0.2, iterationsMeta=10,
-			   popMeta=10, lrMeta=0.00001, sigmaMeta_lr=0.00001, sigmaMeta_sigma=0.02, render=False ) :
+			   popMeta=10, lrMeta=0.00001, sigmaMeta_lr=0.00001, sigmaMeta_sigma=0.02, render=False, logFile=None ) :
 		lr = lrStart
 		sigma = sigmaStart
 
 		for i in range( iterations ) :
+			if logFile :
+				logFile.write( 'meta-main,{},{},{}\n'.format( i * iterationsMeta, lr, sigma ) )
+
 			metaParams = []
 
 			while len( metaParams ) < popMeta :
@@ -29,9 +32,12 @@ class MetaLearner :
 				lrNoise = np.random.normal( 0, sigmaMeta_lr )  # + noise
 				sigmaNoise = np.random.normal( 0, sigmaMeta_sigma )  # + noise
 
+				if logFile :
+					logFile.write( 'meta-cand,{},{},{}\n'.format( i * iterationsMeta, lr + lrNoise, sigma + sigmaNoise ) )
+
 				# test, append to metaParams
 				reward = trainer.Train( iterations=iterationsMeta, population=pop, sigma=sigma + sigmaNoise,
-										lr=lr + lrNoise, render=render )
+										lr=lr + lrNoise, render=render, logFile=logFile )
 				w = trainer.model.get_weights( )
 				metaParams.append( [reward, lrNoise, sigmaNoise, w] )
 
