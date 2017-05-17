@@ -1,6 +1,3 @@
-# es-keras
-# Driver script
-
 # lib
 import argparse
 import gym
@@ -11,6 +8,8 @@ from keras.utils import serialize_keras_object
 # src
 from src.ESTrainer import ESTrainer
 from src.SpeciesHandler import SpeciesHandler
+from src.MetaLearner import MetaLearner
+
 
 # main
 def main( ) :
@@ -31,10 +30,25 @@ def main( ) :
 	# es.Train( iterations=200, render=True )
 
 	# structural learning
-	sh = SpeciesHandler( model, env )
-	sh.Train( extinctionInterval=10, numSpecies=5 )
+	# sh = SpeciesHandler( model, env )
+	# sh.Train( extinctionInterval=10, numSpecies=5 )
+
+	# Meta-Learning
+	metalearner = MetaLearner( model, env )
+	with open( 'metalearner.log', 'w' ) as logFile :
+		metalearner.Train( logFile=logFile )
+
+	# Compare with grid search
+	# es = ESTrainer( model, env )
+	# lr = [ 0.0002, 0.0003, 0.0004, 0.0005 ]
+	# sigma = [0.1, 0.2, 0.25, 0.3]
+	# with open( 'gridsearch.log', 'w' ) as logFile :
+		# for l in lr :
+			# for s in sigma :
+				# es.Train( iterations=100, logFile=logFile )
 
 	return
+
 
 # Command Line Arguments
 def ParseArguments( ) :
@@ -53,6 +67,7 @@ def ParseArguments( ) :
 	args = vars( parser.parse_args( ) )
 
 	return args
+
 
 if __name__ == '__main__' :
 	main( )

@@ -4,6 +4,7 @@
 import numpy as np
 from keras.models import model_from_json
 
+
 class ESTrainer :
 	def __init__( self, model, env ) :
 		self.env = env
@@ -17,15 +18,20 @@ class ESTrainer :
 		for l in self.model.layers :
 			self.weights.append( l.get_weights( )[:] )
 
-	def Train( self, iterations=100, episodes=1, population=100, sigma=0.2, lr=0.0003, render=False ) :
+	def Train( self, iterations=100, episodes=1, population=100, sigma=0.2, lr=0.0003, maxSteps=250,
+			   render=False, verbose=False, logFile=None ) :
 		totalReward = 0.0
 		for i in range( iterations ) :
 			self.GeneratePopulation( population, sigma )
-			self.TestPopulation( episodes, sigma )
+			self.TestPopulation( episodes, sigma, maxSteps )
 			self.ConsolidateModels( lr, sigma )
 
-			print( 'Iteration: {}, average reward: {}, std reward: {}'.format(
-				i, np.mean( self.rewards ), np.std( self.rewards ) ) )
+			if verbose :
+				print( 'Iteration: {}, average reward: {}, std reward: {}'.format(
+					i, np.mean( self.rewards ), np.std( self.rewards ) ) )
+
+			if logFile :
+				logFile.write( 'es,{},{}\n'.format( i, np.mean( self.rewards ) ) )
 
 			totalReward += np.mean( self.rewards )
 
@@ -36,11 +42,11 @@ class ESTrainer :
 				while not done :
 					self.env.render( )
 					action = self.model.predict_classes( np.array( [obs] ), verbose=0 )  # highest prob action from nn
-					obs, reward, done, info = self.env.step( action[0] )
+					obs, r, done, info = self.env.step( action[0] )
 
 		return totalReward / iterations
 
-	def TestPopulation( self, episodes, sigma ) :
+	def TestPopulation( self, episodes, sigma, maxSteps ) :
 		# test each variant over e episodes
 		for p in range( self.population ) :
 			# update model with noise appropriately
@@ -55,11 +61,16 @@ class ESTrainer :
 				done = False
 				self.rewards[p] = 0
 
+				k = 0
 				while not done :
 					# self.env.render( )
-					action = self.model.predict_classes( np.array( [obs] ), verbose=0 )  # highest prob action from nn
+					action = [0]
+					if k < maxSteps :
+						action = self.model.predict_classes( np.array( [obs] ),
+															 verbose=0 )  # highest prob action from nn
 					obs, reward, done, info = self.env.step( action[0] )
 					self.rewards[p] += reward
+					k += 1
 
 	def GeneratePopulation( self, population, std ) :
 		self.population = population
