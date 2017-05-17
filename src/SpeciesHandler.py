@@ -27,13 +27,19 @@ class SpeciesHandler :
 		m = model_from_json( model.to_json( ) )  # deep copy
 		m.set_weights( model.get_weights( ) )
 		self.species.append( Species( m ) )
+		self.pastConfigs = []
 
-	def Train( self, iterations=400, extinctionInterval=10, numSpecies=5 ) :
+	def Train( self, iterations=400, extinctionInterval=10, numSpecies=5, preserve=3 ) :
 		for i in range( int( iterations / extinctionInterval ) ) :
 			# do mutations
 			while len( self.species ) < numSpecies :
-				tempModel = self.Mutate( self.species[0].model )
 				# mutate...
+				tempModel = self.Mutate( self.species[0].model )
+				if not tempModel :
+					continue
+				if tempModel.get_config( ) in self.pastConfigs :
+					continue
+				self.pastConfigs.append( tempModel.get_config( ) )
 				self.species.append( Species( tempModel ) )
 
 			# run each training
@@ -46,8 +52,9 @@ class SpeciesHandler :
 
 			# eliminate lowest performer
 			self.species.sort( key=lambda s : s.reward, reverse=True )
-			print( self.species )
-			self.species.pop( )
+			while len( self.species ) > preserve :
+				self.species.pop( )
+
 			print( self.species )
 			print( 'Top current species, reward: {}'.format( self.species[0].reward ) )
 			self.species[0].model.summary( )
