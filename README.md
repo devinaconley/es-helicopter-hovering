@@ -4,15 +4,18 @@ Evolutionary Strategies with Meta-Learning and Network Learning, for training an
 
 To run the code, please just use "python run.py" with appropriate parameters, could easily comment out or uncomment the related part to run ES, network learning or Meta-Learning like the following, more parameter info. please refer to the specific codes.
 
-# evolutionary-strategies
+## run the code
+python run.py 
+
+## evolutionary-strategies
 es = ESTrainer( model, env )
 es.Train( iterations=200, render=True )
 
-# structural learning
+## structural learning
 sh = SpeciesHandler( model, env )
 sh.Train( extinctionInterval=10, numSpecies=5 )
 
-# Meta-Learning
+## Meta-Learning
 metalearner = MetaLearner( model, env )
 with open( 'metalearner.log', 'w' ) as logFile :
 	metalearner.Train( logFile=logFile )
