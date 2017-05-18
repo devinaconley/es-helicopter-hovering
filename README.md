@@ -8,14 +8,14 @@ To run the code, please just use "python run.py" with appropriate parameters, co
 python run.py 
 
 ## evolutionary-strategies
-es = ESTrainer( model, env )
+es = ESTrainer( model, env ) <br>
 es.Train( iterations=200, render=True )
 
 ## structural learning
-sh = SpeciesHandler( model, env )
+sh = SpeciesHandler( model, env )<br>
 sh.Train( extinctionInterval=10, numSpecies=5 )
 
 ## Meta-Learning
-metalearner = MetaLearner( model, env )
-with open( 'metalearner.log', 'w' ) as logFile :
+metalearner = MetaLearner( model, env )<br>
+with open( 'metalearner.log', 'w' ) as logFile :<br>
 	metalearner.Train( logFile=logFile )
