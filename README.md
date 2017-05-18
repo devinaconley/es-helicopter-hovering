@@ -1,4 +1,4 @@
-# es-keras
+# es-meta
 
 Evolutionary Strategies with Meta-Learning and Network Learning, for training an agent to play LunarLander-v2 using keras model.
 
