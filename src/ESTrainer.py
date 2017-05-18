@@ -18,7 +18,7 @@ class ESTrainer :
 		for l in self.model.layers :
 			self.weights.append( l.get_weights( )[:] )
 
-	def Train( self, iterations=100, episodes=1, population=100, sigma=0.2, lr=0.0003, maxSteps=250,
+	def Train( self, iterations=100, episodes=1, population=100, sigma=0.2, lr=0.0003, maxSteps=400,
 			   render=False, verbose=False, logFile=None ) :
 		totalReward = 0.0
 		for i in range( iterations ) :

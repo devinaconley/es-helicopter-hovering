@@ -34,18 +34,18 @@ def main( ) :
 	# sh.Train( extinctionInterval=10, numSpecies=5 )
 
 	# Meta-Learning
-	metalearner = MetaLearner( model, env )
-	with open( 'metalearner.log', 'w' ) as logFile :
-		metalearner.Train( logFile=logFile )
+	# metalearner = MetaLearner( model, env )
+	# with open( 'metalearner.log', 'w' ) as logFile :
+	# 	metalearner.Train( logFile=logFile )
 
 	# Compare with grid search
-	# es = ESTrainer( model, env )
-	# lr = [ 0.0002, 0.0003, 0.0004, 0.0005 ]
-	# sigma = [0.1, 0.2, 0.25, 0.3]
-	# with open( 'gridsearch.log', 'w' ) as logFile :
-		# for l in lr :
-			# for s in sigma :
-				# es.Train( iterations=100, logFile=logFile )
+	lr = [ 0.0002, 0.0003, 0.0004, 0.0005 ]
+	sigma = [0.1, 0.2, 0.25, 0.3]
+	with open( 'gridsearch.log', 'w' ) as logFile :
+		for l in lr :
+			for s in sigma :
+				es = ESTrainer( model, env )
+				es.Train( iterations=100, logFile=logFile, lr=l, sigma=s, verbose=True )
 
 	return
 
