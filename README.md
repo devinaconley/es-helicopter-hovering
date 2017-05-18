@@ -1,2 +1,18 @@
 # es-keras
-Evolutionary Strategies for training a keras model
+
+Evolutionary Strategies with Meta-Learning and Network Learning, for training an agent to play LunarLander-v2 using keras model.
+
+To run the code, please just use "python run.py" with appropriate parameters, could easily comment out or uncomment the related part to run ES, network learning or Meta-Learning like the following, more parameter info. please refer to the specific codes.
+
+# evolutionary-strategies
+es = ESTrainer( model, env )
+es.Train( iterations=200, render=True )
+
+# structural learning
+sh = SpeciesHandler( model, env )
+sh.Train( extinctionInterval=10, numSpecies=5 )
+
+# Meta-Learning
+metalearner = MetaLearner( model, env )
+with open( 'metalearner.log', 'w' ) as logFile :
+	metalearner.Train( logFile=logFile )
