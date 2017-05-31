@@ -1,29 +1,67 @@
 # Evolutionary Strategies trainer
+#
+# this trainer expects a keras model, but instead uses ES techniques for training
 
 # lib
 import numpy as np
 from keras.models import model_from_json
 
-
 class ESTrainer :
 	def __init__( self, model, env ) :
 		self.env = env
-		self.model = model_from_json( model.to_json( ) )  # deep copy
-		self.model.set_weights( model.get_weights( ) )
-		self.weights = []
 		self.noise = []
 		self.rewards = []
+		self.SetModel( model )
 
-		# get original weights
+		# default config
+		self.population = 100
+		self.maxSteps = None
+		self.maxStepsAction = 0
+		self.episodes = 1
+		self.render = False
+
+	def GetModel( self ) :
+		# return deep copy
+		m = model_from_json( self.model.to_json() )
+		m.set_weights( self.model.get_weights() )
+		return m
+
+	def SetModel( self, model ) :
+		# deep copy of model
+		self.model = model_from_json( model.to_json() )
+		self.model.set_weights( model.get_weights() )
+		# get weights
+		self.weights = []
 		for l in self.model.layers :
-			self.weights.append( l.get_weights( )[:] )
+			self.weights.append( l.get_weights()[:] )
 
-	def Train( self, iterations=100, episodes=1, population=100, sigma=0.2, lr=0.0003, maxSteps=400,
-			   render=False, verbose=False, logFile=None ) :
+	# Configure ES specific params
+	def Configure( self, population=None, maxSteps=None, maxStepsAction=None, episodes=None, render=None ) :
+		if population :
+			self.population = population
+		if maxSteps :
+			self.maxSteps = maxSteps
+		if maxStepsAction :
+			self.maxStepsAction = maxStepsAction
+		if episodes :
+			self.episodes = episodes
+		if render :
+			self.render = render
+
+	# Generic training interface
+	def Train( self, iterations=100, params=[0.2, 0.0003], verbose=False, logFile=None ) :
+		# parse training parameters
+		if len( params ) != 2 :
+			print( 'Invalid number of parameters' )
+			return
+		sigma = params[0]
+		lr = params[1]
+
+		# do training
 		totalReward = 0.0
 		for i in range( iterations ) :
-			self.GeneratePopulation( population, sigma )
-			self.TestPopulation( episodes, sigma, maxSteps )
+			self.GeneratePopulation( sigma )
+			self.TestPopulation( sigma )
 			self.ConsolidateModels( lr, sigma )
 
 			if verbose :
@@ -35,18 +73,19 @@ class ESTrainer :
 
 			totalReward += np.mean( self.rewards )
 
-			if render :  # show debug episode of updated model
-				obs = self.env.reset( )
+			# show debug episode of updated model
+			if self.render :
+				obs = self.env.reset()
 				done = False
 
 				while not done :
-					self.env.render( )
+					self.env.render()
 					action = self.model.predict_classes( np.array( [obs] ), verbose=0 )  # highest prob action from nn
 					obs, r, done, info = self.env.step( action[0] )
 
 		return totalReward / iterations
 
-	def TestPopulation( self, episodes, sigma, maxSteps ) :
+	def TestPopulation( self, sigma ) :
 		# test each variant over e episodes
 		for p in range( self.population ) :
 			# update model with noise appropriately
@@ -55,30 +94,28 @@ class ESTrainer :
 				l.set_weights( [(self.weights[i][j] + sigma * self.noise[i][j][p, :])
 								for j in range( len( self.weights[i] ) )] )
 
-			for e in range( episodes ) :
+			self.rewards[p] = 0
+			for e in range( self.episodes ) :
 				# setup/run episode
-				obs = self.env.reset( )
+				obs = self.env.reset()
 				done = False
-				self.rewards[p] = 0
 
 				k = 0
 				while not done :
-					# self.env.render( )
-					action = [0]
-					if k < maxSteps :
-						action = self.model.predict_classes( np.array( [obs] ),
-															 verbose=0 )  # highest prob action from nn
+					action = [self.maxStepsAction]
+					if not self.maxSteps or k < self.maxSteps :
+						# highest prob action from nn
+						action = self.model.predict_classes( np.array( [obs] ), verbose=0 )
 					obs, reward, done, info = self.env.step( action[0] )
 					self.rewards[p] += reward
 					k += 1
 
-	def GeneratePopulation( self, population, std ) :
-		self.population = population
+	def GeneratePopulation( self, std ) :
 
 		# get base model shape and weights
 		layerShapes = []
 		for l in self.model.layers :
-			layerShapes.append( [w.shape for w in l.get_weights( )] )
+			layerShapes.append( [w.shape for w in l.get_weights()] )
 
 		# generate random population
 		del self.noise[:]
@@ -86,10 +123,10 @@ class ESTrainer :
 		for l in layerShapes :
 			layer = []
 			for sh in l :
-				layer.append( np.random.randn( population, *sh ) )
+				layer.append( np.random.randn( self.population, *sh ) )
 			self.noise.append( layer )
 
-		self.rewards = np.zeros( population )
+		self.rewards = np.zeros( self.population )
 
 	def WeightedSum( self, values, weights ) :
 		return np.dot( values, weights )

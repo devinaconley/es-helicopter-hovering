@@ -10,50 +10,50 @@ from src.ESTrainer import ESTrainer
 from src.SpeciesHandler import SpeciesHandler
 from src.MetaLearner import MetaLearner
 
-
 # main
-def main( ) :
+def main() :
 	# pull command line args
-	args = ParseArguments( )
+	args = ParseArguments()
 
 	# setup environment
 	env = gym.make( args['environment'] )
-	obs = env.reset( )
+	obs = env.reset()
 
 	# setup original model
-	model = Sequential( )
+	model = Sequential()
 	model.add( Dense( env.action_space.n, input_shape=obs.shape,
 					  kernel_initializer='random_normal', use_bias=False ) )
 
 	# evolutionary-strategies
-	# es = ESTrainer( model, env )
-	# es.Train( iterations=200, render=True )
+	es = ESTrainer( model, env )
+	es.Configure( population=100, maxSteps=400, maxStepsAction=0 )
+	# es.Train( iterations=200, verbose=True )
 
 	# structural learning
 	# sh = SpeciesHandler( model, env )
 	# sh.Train( extinctionInterval=10, numSpecies=5 )
 
 	# Meta-Learning
-	# metalearner = MetaLearner( model, env )
-	# with open( 'metalearner.log', 'w' ) as logFile :
-	# 	metalearner.Train( logFile=logFile )
+	metalearner = MetaLearner( es )
+	with open( 'metalearner.log', 'w' ) as logFile :
+		metalearner.Train( logFile=logFile, paramsOrig=[0.2, 0.0003], sigmas=[0.02, 0.00003],
+						   population=10, iterationsMeta=10, verbose=True )
 
 	# Compare with grid search
-	lr = [ 0.0002, 0.0003, 0.0004, 0.0005 ]
-	sigma = [0.1, 0.2, 0.25, 0.3]
-	with open( 'gridsearch.log', 'w' ) as logFile :
-		for l in lr :
-			for s in sigma :
-				es = ESTrainer( model, env )
-				es.Train( iterations=100, logFile=logFile, lr=l, sigma=s, verbose=True )
+	# lr = [ 0.0002, 0.0003, 0.0004, 0.0005 ]
+	# sigma = [0.1, 0.2, 0.25, 0.3]
+	# with open( 'gridsearch.log', 'w' ) as logFile :
+	# 	for l in lr :
+	# 		for s in sigma :
+	# 			es = ESTrainer( model, env )
+	# 			es.Train( iterations=100, logFile=logFile, lr=l, sigma=s, verbose=True )
 
 	return
 
-
 # Command Line Arguments
-def ParseArguments( ) :
+def ParseArguments() :
 	# Define arguments
-	parser = argparse.ArgumentParser( )
+	parser = argparse.ArgumentParser()
 	parser.add_argument( '-m', '--model', help='Path to existing model to start training from',
 						 default=None )
 	parser.add_argument( '-n', '--episodes', help='Number of episodes per training iteration',
@@ -64,10 +64,9 @@ def ParseArguments( ) :
 						 default='LunarLander-v2' )
 
 	# Parse arguments and return
-	args = vars( parser.parse_args( ) )
+	args = vars( parser.parse_args() )
 
 	return args
 
-
 if __name__ == '__main__' :
-	main( )
+	main()
