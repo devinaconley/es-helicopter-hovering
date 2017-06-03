@@ -46,7 +46,7 @@ class SpeciesHandler :
 			for j, s in enumerate( self.species ) :
 				s.model.summary( )
 				trainer = ESTrainer( s.model, self.env )
-				r = trainer.Train( iterations=extinctionInterval, render=(j == 0) )
+				r = trainer.Train( iterations=extinctionInterval )
 				s.reward = r
 				s.model = trainer.model
 

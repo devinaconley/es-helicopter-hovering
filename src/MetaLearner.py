@@ -13,7 +13,7 @@ class MetaLearner :
 		self.model = trainer.GetModel()
 
 	def Train( self, iterations=100, population=10, paramsOrig=[], sigmas=[],
-			   iterationsMeta=10, lr=0.00001, logFile=None, verbose=False ) :
+			   iterationsMeta=10, lr=0.001, logFile=None, verbose=False ) :
 		# sanitize
 		if len( paramsOrig ) != len( sigmas ) :
 			print( 'Length of original parameter values and parameters noise must match.' )
@@ -24,7 +24,7 @@ class MetaLearner :
 
 		params = paramsOrig[:]
 
-		for i in range( iterations ) :
+		for i in range( int( iterations / iterationsMeta ) ) :
 			cands = []
 
 			while len( cands ) < population :

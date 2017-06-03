@@ -4,8 +4,9 @@ import gym
 import numpy as np
 from keras.models import Sequential
 from keras.layers import Dense, Activation
-from keras.utils import serialize_keras_object
+from keras.utils import serialize_keras_object, np_utils
 import itertools
+from sklearn.preprocessing import LabelEncoder
 
 # src
 from src.SpeciesHandler import SpeciesHandler
@@ -22,7 +23,21 @@ def main() :
 	trainer = None
 
 	if args['trainer'].lower() == 'KerasTrainer'.lower() :
-		trainer = KerasTrainer()
+		# load dataset
+		x = np.loadtxt( args['dataset'], delimiter=',', usecols=[0, 1, 2, 3] )
+		yRaw = np.loadtxt( args['dataset'], delimiter=',', usecols=[4], dtype=np.str )
+		# encode labels
+		enc = LabelEncoder()
+		enc.fit( yRaw )
+		y = enc.transform( yRaw )
+		y = np_utils.to_categorical( y )
+
+		# setup model
+		model = Sequential()
+		model.add( Dense( 8, input_dim=x.shape[1], activation='tanh' ) )
+		model.add( Dense( y.shape[1], activation='sigmoid' ) )
+
+		trainer = KerasTrainer( model, x, y )
 
 
 	elif args['trainer'].lower() == 'ESTrainer'.lower() :
@@ -46,16 +61,16 @@ def main() :
 	if args['esMeta'] :
 		# Meta-Learning
 		metalearner = MetaLearner( trainer )
-		with open( 'metalearner.log', 'w' ) as logFile :
+		with open( '{}_metalearner.log'.format( args['trainer'] ), 'w' ) as logFile :
 			metalearner.Train( logFile=logFile, paramsOrig=args['params'], sigmas=args['sigmas'],
-							   population=args['population'], iterationsMeta=args['iterMeta'],
-							   verbose=True )
+							   population=args['population'], iterations=args['iterations'],
+							   iterationsMeta=args['iterMeta'],verbose=True )
 
 	elif args['gridMeta'] :
 		# Compare with grid search
 		perms = itertools.product( *args['gridValues'] )
 		model = trainer.GetModel()
-		with open( 'gridsearch.log', 'w' ) as logFile :
+		with open( '{}_gridsearch.log'.format( args['trainer'] ), 'w' ) as logFile :
 			for p in perms :
 				trainer.SetModel( model )
 				trainer.Train( params=p, iterations=args['iterations'], logFile=logFile, verbose=True )
@@ -92,7 +107,7 @@ def ParseArguments() :
 	parser.add_argument( '-e', '--environment', help='OpenAI environment (only for RL)',
 						 default='LunarLander-v2' )
 	parser.add_argument( '-d', '--dataset', help='Path to dataset (only for supervised)',
-						 default='/etc/datasets/' )
+						 default='etc/datasets/iris.data' )
 	parser.add_argument( '-t', '--trainer', help='RL options: ESTrainer; Supervised options: KerasTrainer, ...',
 						 default='ESTrainer' )
 	parser.add_argument( '-l', '--logfile', help='Filename to log learning metrics' )

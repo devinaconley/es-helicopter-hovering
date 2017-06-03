@@ -1,4 +1,4 @@
-name: es-keras
+name: es-meta
 channels:
 - kne
 - defaults
@@ -23,8 +23,10 @@ dependencies:
   - pyglet==1.2.4
   - pyyaml==3.12
   - requests==2.13.0
+  - scikit-learn==0.18.1
   - scipy==0.19.0
   - six==1.10.0
+  - sklearn==0.0
   - tensorflow==1.0.1
-prefix: /home/devin/miniconda3/envs/es-keras
+prefix: /home/devin/miniconda3/envs/es-meta
 
