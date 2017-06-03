@@ -1,6 +1,6 @@
 # es-meta
 
-Evolution Strategies applied to Meta-Learning and Network Learning
+Evolution Strategies applied to meta-learning and network structure learning
 
 ## Meta-learning
 
@@ -64,7 +64,7 @@ grid-search for meta-learning over supervised learning for iris:
 python run.py -t KerasTrainer --grid-meta -d etc/datasets/iris.data -g [0.0002,0.0003,0.0004] [0.85,0.9,0.95] [0.9985,0.999,0.9995] -i 50
 ```
 
-grid search for meta-learning over ES on OpenAI RL task:
+grid-search for meta-learning over ES on OpenAI RL task:
 ```
 python run.py -t ESTrainer --grid-meta -e LunarLander-v2 -g [0.15,0.2,0.25,0.3] [0.0002,0.0003,0.0035,0.0004]
 ```
