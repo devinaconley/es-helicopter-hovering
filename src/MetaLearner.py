@@ -4,9 +4,6 @@
 import numpy as np
 from keras.models import model_from_json
 
-# src
-from .ESTrainer import ESTrainer
-
 class MetaLearner :
 	def __init__( self, trainer ) :
 		self.trainer = trainer
@@ -69,7 +66,7 @@ class MetaLearner :
 			strParams = ','.join( str( p ) for p in params )
 			if logFile :
 				logFile.write( 'meta-main,{},{},{}\n'.format(
-					i * iterationsMeta, bestReward, strParams ) )
+					(i + 1) * iterationsMeta, bestReward, strParams ) )
 			if verbose :
 				print( 'generations: {}, max reward: {}, params: {}'.format(
 					(i + 1) * iterationsMeta, bestReward, strParams ) )

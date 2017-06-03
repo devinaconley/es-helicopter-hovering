@@ -11,7 +11,7 @@ from sklearn.preprocessing import LabelEncoder
 # src
 from src.SpeciesHandler import SpeciesHandler
 from src.MetaLearner import MetaLearner
-from src.ESTrainer import ESTrainer
+from src.trainer.ESTrainer import ESTrainer
 from src.trainer.KerasTrainer import KerasTrainer
 
 # main

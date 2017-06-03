@@ -6,7 +6,7 @@ from keras import layers
 from random import randint, choice
 
 # src
-from .ESTrainer import ESTrainer
+from src.trainer.ESTrainer import ESTrainer
 
 # species struct
 class Species :
