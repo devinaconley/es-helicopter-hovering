@@ -8,97 +8,99 @@ from random import randint, choice
 # src
 from src.trainer.ESTrainer import ESTrainer
 
+
 # species struct
-class Species :
-	def __init__( self, model ) :
-		self.model = model
-		self.reward = 0.0
+class Species:
+    def __init__( self, model ):
+        self.model = model
+        self.reward = 0.0
 
-	def __str__( self ) :
-		return str( self.model ) + ' - reward: ' + str( self.reward )
+    def __str__( self ):
+        return str( self.model ) + ' - reward: ' + str( self.reward )
 
-	def __repr__( self ) :
-		return self.__str__( )
+    def __repr__( self ):
+        return self.__str__()
 
-class SpeciesHandler :
-	def __init__( self, model, env ) :
-		self.env = env
-		self.species = []
-		m = model_from_json( model.to_json( ) )  # deep copy
-		m.set_weights( model.get_weights( ) )
-		self.species.append( Species( m ) )
-		self.pastConfigs = []
 
-	def Train( self, iterations=400, extinctionInterval=10, numSpecies=5, preserve=3 ) :
-		for i in range( int( iterations / extinctionInterval ) ) :
-			# do mutations
-			while len( self.species ) < numSpecies :
-				# mutate...
-				tempModel = self.Mutate( self.species[0].model )
-				if not tempModel :
-					continue
-				if tempModel.get_config( ) in self.pastConfigs :
-					continue
-				self.pastConfigs.append( tempModel.get_config( ) )
-				self.species.append( Species( tempModel ) )
+class SpeciesHandler:
+    def __init__( self, model, env ):
+        self.env = env
+        self.species = []
+        m = model_from_json( model.to_json() )  # deep copy
+        m.set_weights( model.get_weights() )
+        self.species.append( Species( m ) )
+        self.pastConfigs = []
 
-			# run each training
-			for j, s in enumerate( self.species ) :
-				s.model.summary( )
-				trainer = ESTrainer( s.model, self.env )
-				r = trainer.Train( iterations=extinctionInterval )
-				s.reward = r
-				s.model = trainer.model
+    def train( self, iterations=400, extinctionInterval=10, numSpecies=5, preserve=3 ):
+        for i in range( int( iterations / extinctionInterval ) ):
+            # do mutations
+            while len( self.species ) < numSpecies:
+                # mutate...
+                tempModel = self.Mutate( self.species[0].model )
+                if not tempModel:
+                    continue
+                if tempModel.get_config() in self.pastConfigs:
+                    continue
+                self.pastConfigs.append( tempModel.get_config() )
+                self.species.append( Species( tempModel ) )
 
-			# eliminate lowest performer
-			self.species.sort( key=lambda s : s.reward, reverse=True )
-			while len( self.species ) > preserve :
-				self.species.pop( )
+            # run each training
+            for j, s in enumerate( self.species ):
+                s.model.summary()
+                trainer = ESTrainer( s.model, self.env )
+                r = trainer.Train( iterations=extinctionInterval )
+                s.reward = r
+                s.model = trainer.model
 
-			print( self.species )
-			print( 'Top current species, reward: {}'.format( self.species[0].reward ) )
-			self.species[0].model.summary( )
+            # eliminate lowest performer
+            self.species.sort( key=lambda s: s.reward, reverse=True )
+            while len( self.species ) > preserve:
+                self.species.pop()
 
-	def Mutate( self, origModel ) :
-		n = randint( 0, len( origModel.layers ) - 1 )  # do mutate at nth layer
-		insert = choice( [True, False] )  # insert/remove
+            print(self.species)
+            print('Top current species, reward: {}'.format( self.species[0].reward ))
+            self.species[0].model.summary()
 
-		if (n == len( origModel.layers ) - 1) and (not insert) :  # consider last layer immutable
-			return self.Mutate( origModel )  # try again
+    def mutate( self, origModel ):
+        n = randint( 0, len( origModel.layers ) - 1 )  # do mutate at nth layer
+        insert = choice( [True, False] )  # insert/remove
 
-		# get general current dimensions of model
-		minNodes = -1  # TODO: extend this to any generic layer shape (for conv, etc.)
-		maxNodes = -1
-		for l in origModel.layers :
-			sz = l.output_shape[1]
-			if sz < minNodes or minNodes == -1 :
-				minNodes = sz
-			if sz > maxNodes or maxNodes == 1 :
-				maxNodes = sz
+        if (n == len( origModel.layers ) - 1) and (not insert):  # consider last layer immutable
+            return self.Mutate( origModel )  # try again
 
-		model = Sequential( )
-		for i, l in enumerate( origModel.layers ) :
-			lCopy = layers.deserialize( {'class_name' : l.__class__.__name__, 'config' : l.get_config( )} )  # deep copy
+        # get general current dimensions of model
+        minNodes = -1  # TODO: extend this to any generic layer shape (for conv, etc.)
+        maxNodes = -1
+        for l in origModel.layers:
+            sz = l.output_shape[1]
+            if sz < minNodes or minNodes == -1:
+                minNodes = sz
+            if sz > maxNodes or maxNodes == 1:
+                maxNodes = sz
 
-			if i == n and insert :  # insert rand layer
-				model.add( self.RandLayer( minNodes=minNodes, maxNodes=maxNodes,
-										   inputShape=(l.input_shape[1 :] if i == 0 else None) ) )
+        model = Sequential()
+        for i, l in enumerate( origModel.layers ):
+            lCopy = layers.deserialize( {'class_name': l.__class__.__name__, 'config': l.get_config()} )  # deep copy
 
-			if i == n and not insert :  # remove
-				continue
+            if i == n and insert:  # insert rand layer
+                model.add( self.RandLayer( minNodes=minNodes, maxNodes=maxNodes,
+                                           inputShape=(l.input_shape[1:] if i == 0 else None) ) )
 
-			model.add( lCopy )
+            if i == n and not insert:  # remove
+                continue
 
-		return model
+            model.add( lCopy )
 
-	def RandLayer( self, minNodes=4, maxNodes=10, inputShape=None ) :
-		# setup
-		minNodes = minNodes if minNodes > 1 else 2
-		sz = randint( minNodes - 1, maxNodes + 1 )
-		i = randint( 0, 1 )  # case switch for type of layer to return
+        return model
 
-		if i == 0 :  # dense
-			return layers.Dense( sz, input_shape=inputShape ) if inputShape else layers.Dense( sz )
-		elif i == 1 :  # activation
-			fx = choice( ['elu', 'softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid'] )
-			return layers.Activation( fx, input_shape=inputShape ) if inputShape else layers.Activation( fx )
+    def randLayer( self, minNodes=4, maxNodes=10, inputShape=None ):
+        # setup
+        minNodes = minNodes if minNodes > 1 else 2
+        sz = randint( minNodes - 1, maxNodes + 1 )
+        i = randint( 0, 1 )  # case switch for type of layer to return
+
+        if i == 0:  # dense
+            return layers.Dense( sz, input_shape=inputShape ) if inputShape else layers.Dense( sz )
+        elif i == 1:  # activation
+            fx = choice( ['elu', 'softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid'] )
+            return layers.Activation( fx, input_shape=inputShape ) if inputShape else layers.Activation( fx )

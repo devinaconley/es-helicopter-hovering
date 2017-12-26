@@ -6,139 +6,140 @@
 import numpy as np
 from keras.models import model_from_json
 
-class ESTrainer :
-	def __init__( self, model, env ) :
-		self.env = env
-		self.noise = []
-		self.rewards = []
-		self.SetModel( model )
 
-		# default config
-		self.population = 100
-		self.maxSteps = None
-		self.maxStepsAction = 0
-		self.episodes = 1
-		self.render = False
+class ESTrainer:
+    def __init__( self, model, env ):
+        self.env = env
+        self.noise = []
+        self.rewards = []
+        self.setModel( model )
 
-	def GetModel( self ) :
-		# return deep copy
-		m = model_from_json( self.model.to_json() )
-		m.set_weights( self.model.get_weights() )
-		return m
+        # default config
+        self.population = 100
+        self.maxSteps = None
+        self.maxStepsAction = 0
+        self.episodes = 1
+        self.render = False
 
-	def SetModel( self, model ) :
-		# deep copy of model
-		self.model = model_from_json( model.to_json() )
-		self.model.set_weights( model.get_weights() )
-		# get weights
-		self.weights = []
-		for l in self.model.layers :
-			self.weights.append( l.get_weights()[:] )
+    def getModel( self ):
+        # return deep copy
+        m = model_from_json( self.model.to_json() )
+        m.set_weights( self.model.get_weights() )
+        return m
 
-	# Configure ES specific params
-	def Configure( self, population=None, maxSteps=None, maxStepsAction=None, episodes=None, render=None ) :
-		if population :
-			self.population = population
-		if maxSteps :
-			self.maxSteps = maxSteps
-		if maxStepsAction :
-			self.maxStepsAction = maxStepsAction
-		if episodes :
-			self.episodes = episodes
-		if render :
-			self.render = render
+    def setModel( self, model ):
+        # deep copy of model
+        self.model = model_from_json( model.to_json() )
+        self.model.set_weights( model.get_weights() )
+        # get weights
+        self.weights = []
+        for l in self.model.layers:
+            self.weights.append( l.get_weights()[:] )
 
-	# Generic training interface
-	def Train( self, iterations=100, params=[0.2, 0.0003], verbose=False, logFile=None ) :
-		# parse training parameters
-		if len( params ) != 2 :
-			print( 'Invalid number of parameters' )
-			return
-		sigma = params[0]
-		lr = params[1]
+    # Configure ES specific params
+    def configure( self, population=None, maxSteps=None, maxStepsAction=None, episodes=None, render=None ):
+        if population:
+            self.population = population
+        if maxSteps:
+            self.maxSteps = maxSteps
+        if maxStepsAction:
+            self.maxStepsAction = maxStepsAction
+        if episodes:
+            self.episodes = episodes
+        if render:
+            self.render = render
 
-		# do training
-		totalReward = 0.0
-		for i in range( iterations ) :
-			self.GeneratePopulation( sigma )
-			self.TestPopulation( sigma )
-			self.ConsolidateModels( lr, sigma )
+    # Generic training interface
+    def train( self, iterations=100, params=[0.2, 0.0003], verbose=False, logFile=None ):
+        # parse training parameters
+        if len( params ) != 2:
+            print( 'Invalid number of parameters' )
+            return
+        sigma = params[0]
+        lr = params[1]
 
-			if verbose :
-				print( 'Iteration: {}, average reward: {}, std reward: {}'.format(
-					i, np.mean( self.rewards ), np.std( self.rewards ) ) )
+        # do training
+        totalReward = 0.0
+        for i in range( iterations ):
+            self.generatePopulation( sigma )
+            self.testPopulation( sigma )
+            self.consolidateModels( lr, sigma )
 
-			if logFile :
-				logFile.write( 'es,{},{}\n'.format( i, np.mean( self.rewards ) ) )
+            if verbose:
+                print( 'Iteration: {}, average reward: {}, std reward: {}'.format(
+                    i, np.mean( self.rewards ), np.std( self.rewards ) ) )
 
-			totalReward += np.mean( self.rewards )
+            if logFile:
+                logFile.write( 'es,{},{}\n'.format( i, np.mean( self.rewards ) ) )
 
-			# show debug episode of updated model
-			if self.render :
-				obs = self.env.reset()
-				done = False
+            totalReward += np.mean( self.rewards )
 
-				while not done :
-					self.env.render()
-					action = self.model.predict_classes( np.array( [obs] ), verbose=0 )  # highest prob action from nn
-					obs, r, done, info = self.env.step( action[0] )
+            # show debug episode of updated model
+            if self.render:
+                obs = self.env.reset()
+                done = False
 
-		return totalReward / iterations
+                while not done:
+                    self.env.render()
+                    action = self.model.predict_classes( np.array( [obs] ), verbose=0 )  # highest prob action from nn
+                    obs, r, done, info = self.env.step( action[0] )
 
-	def TestPopulation( self, sigma ) :
-		# test each variant over e episodes
-		for p in range( self.population ) :
-			# update model with noise appropriately
+        return totalReward / iterations
 
-			for i, l in enumerate( self.model.layers ) :
-				l.set_weights( [(self.weights[i][j] + sigma * self.noise[i][j][p, :])
-								for j in range( len( self.weights[i] ) )] )
+    def testPopulation( self, sigma ):
+        # test each variant over e episodes
+        for p in range( self.population ):
+            # update model with noise appropriately
 
-			self.rewards[p] = 0
-			for e in range( self.episodes ) :
-				# setup/run episode
-				obs = self.env.reset()
-				done = False
+            for i, l in enumerate( self.model.layers ):
+                l.set_weights( [(self.weights[i][j] + sigma * self.noise[i][j][p, :])
+                                for j in range( len( self.weights[i] ) )] )
 
-				k = 0
-				while not done :
-					action = [self.maxStepsAction]
-					if not self.maxSteps or k < self.maxSteps :
-						# highest prob action from nn
-						action = self.model.predict_classes( np.array( [obs] ), verbose=0 )
-					obs, reward, done, info = self.env.step( action[0] )
-					self.rewards[p] += reward
-					k += 1
+            self.rewards[p] = 0
+            for e in range( self.episodes ):
+                # setup/run episode
+                obs = self.env.reset()
+                done = False
 
-	def GeneratePopulation( self, std ) :
+                k = 0
+                while not done:
+                    action = [self.maxStepsAction]
+                    if not self.maxSteps or k < self.maxSteps:
+                        # highest prob action from nn
+                        action = self.model.predict_classes( np.array( [obs] ), verbose=0 )
+                    obs, reward, done, info = self.env.step( action[0] )
+                    self.rewards[p] += reward
+                    k += 1
 
-		# get base model shape and weights
-		layerShapes = []
-		for l in self.model.layers :
-			layerShapes.append( [w.shape for w in l.get_weights()] )
+    def generatePopulation( self, std ):
 
-		# generate random population
-		del self.noise[:]
-		# set weights for each layer by adding noise to base model
-		for l in layerShapes :
-			layer = []
-			for sh in l :
-				layer.append( np.random.randn( self.population, *sh ) )
-			self.noise.append( layer )
+        # get base model shape and weights
+        layerShapes = []
+        for l in self.model.layers:
+            layerShapes.append( [w.shape for w in l.get_weights()] )
 
-		self.rewards = np.zeros( self.population )
+        # generate random population
+        del self.noise[:]
+        # set weights for each layer by adding noise to base model
+        for l in layerShapes:
+            layer = []
+            for sh in l:
+                layer.append( np.random.randn( self.population, *sh ) )
+            self.noise.append( layer )
 
-	def WeightedSum( self, values, weights ) :
-		return np.dot( values, weights )
+        self.rewards = np.zeros( self.population )
 
-	def ConsolidateModels( self, lr, std ) :
-		# normed = (self.rewards - np.mean( self.rewards )) / np.std( self.rewards )
-		newWeights = self.weights[:]
+    def weightedSum( self, values, weights ):
+        return np.dot( values, weights )
 
-		# weighted updates
-		for i, l in enumerate( newWeights ) :
-			for j, w in enumerate( l ) :
-				update = np.apply_along_axis( self.WeightedSum, 0, self.noise[i][j], self.rewards )
-				w += lr / (self.population * std) * update
+    def consolidateModels( self, lr, std ):
+        # normed = (self.rewards - np.mean( self.rewards )) / np.std( self.rewards )
+        newWeights = self.weights[:]
 
-		self.weights = newWeights
+        # weighted updates
+        for i, l in enumerate( newWeights ):
+            for j, w in enumerate( l ):
+                update = np.apply_along_axis( self.weightedSum, 0, self.noise[i][j], self.rewards )
+                w += lr / (self.population * std) * update
+
+        self.weights = newWeights
