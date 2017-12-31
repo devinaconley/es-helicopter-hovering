@@ -14,10 +14,10 @@ class MetaLearner:
                iterationsMeta=10, lr=0.001, logFile=None, verbose=False ):
         # sanitize
         if len( paramsOrig ) != len( sigmas ):
-            print('Length of original parameter values and parameters noise must match.')
+            print( 'Length of original parameter values and parameters noise must match.' )
             return
         if not paramsOrig:
-            print('Original parameter values must not be empty.')
+            print( 'Original parameter values must not be empty.' )
             return
 
         params = paramsOrig[:]
@@ -38,7 +38,12 @@ class MetaLearner:
                                              logFile=logFile, verbose=verbose )
 
                 m = self.trainer.getModel()
-                cands.append( [reward, paramsTemp, m] )
+                cands.append( {
+                    'reward': reward,
+                    'params': paramsTemp,
+                    'noise': noise,
+                    'model': m
+                } )
 
                 # log and print as appropriate
                 strParams = ','.join( str( p ) for p in paramsTemp )
@@ -46,20 +51,23 @@ class MetaLearner:
                     logFile.write( 'meta-cand,{},{},{}\n'.format(
                         (i + 1) * iterationsMeta, reward, strParams ) )
                 if verbose:
-                    print('candidate {} -- reward: {}, params: {}'.format(
-                        len( cands ), reward, strParams ))
+                    print( 'candidate {} -- reward: {}, params: {}'.format(
+                        len( cands ), reward, strParams ) )
 
             # do updates
-            meanReward = sum( [x[0] for x in cands] ) / len( cands )  # to normalize
-            bestReward = cands[0][0]
-            bestModel = cands[0][2]
+            meanReward = np.mean( [x['reward'] for x in cands] )  # to normalize
+            stdReward = np.std( [x['reward'] for x in cands] )
+            bestReward = cands[0]['reward']
+            bestModel = cands[0]['model']
             for c in cands:
-                if c[0] > bestReward:
-                    bestReward = c[0]
-                    bestModel = c[2]
+                if c['reward'] > bestReward:
+                    bestReward = c['reward']
+                    bestModel = c['model']
                 # weighted update of all params
                 for j in range( len( params ) ):
-                    params[j] += (lr / (sigmas[j] * population)) * (c[0] - meanReward) * c[1][j]
+                    params[j] += ((lr / (sigmas[j] * population))
+                                  * ((c['reward'] - meanReward) / stdReward)
+                                  * c['noise'][j])
 
             self.model = bestModel
 
@@ -69,5 +77,5 @@ class MetaLearner:
                 logFile.write( 'meta-main,{},{},{}\n'.format(
                     (i + 1) * iterationsMeta, bestReward, strParams ) )
             if verbose:
-                print('generations: {}, max reward: {}, params: {}'.format(
-                    (i + 1) * iterationsMeta, bestReward, strParams ))
+                print( 'generations: {}, max reward: {}, params: {}'.format(
+                    (i + 1) * iterationsMeta, bestReward, strParams ) )

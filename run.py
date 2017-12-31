@@ -95,7 +95,7 @@ def main():
 
     else:
         # train with no metalearning
-        trainer.train( iterations=args['iterations'], params=args['params'], verbose=True )
+        trainer.train( iterations=config['iterations'], params=config['paramInitials'], verbose=True )
 
     # structural learning
     # sh = SpeciesHandler( model, env )
