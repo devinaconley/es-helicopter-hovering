@@ -1,0 +1,31 @@
+{
+  "trainer": "ESTrainer",
+  "environment": "LunarLander-v2",
+  "paramInitials": [
+    0.2,
+    0.0003
+  ],
+  "paramSigmas": [
+    0.02,
+    0.00003
+  ],
+  "paramsGrid": [
+    [
+      0.15,
+      0.2,
+      0.25,
+      0.3
+    ],
+    [
+      0.0002,
+      0.0003,
+      0.0035,
+      0.0004
+    ]
+  ],
+  "iterations": 100,
+  "iterationsMeta": 10,
+  "population": 10,
+  "runESMeta" : true,
+  "runGridMeta" : true
+}

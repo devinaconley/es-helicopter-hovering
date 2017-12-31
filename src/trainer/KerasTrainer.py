@@ -10,9 +10,11 @@ from keras.optimizers import SGD, Adam
 
 class KerasTrainer:
     def __init__( self, model, x, y ):
-        self.model = model
         self.x = x
         self.y = y
+        self.setModel( model )
+
+        # default config
         self.batchSize = 1
         self.validationSplit = 0.0  # if nonzero, will do ES based on validation accuracy
 
