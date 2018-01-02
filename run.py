@@ -32,21 +32,48 @@ def main():
     trainer = None
 
     if trainerType == 'KerasTrainer'.lower():
-        # load dataset
-        x = np.loadtxt( config['dataset'], delimiter=',', usecols=[0, 1, 2, 3] )
-        yRaw = np.loadtxt( config['dataset'], delimiter=',', usecols=[4], dtype=np.str )
+        # get labels
+        yRaw = np.loadtxt( config['dataset'], delimiter=',', dtype=np.str,
+                           usecols=[config['datasetLabelIndex']] )
+
         # encode labels
         enc = LabelEncoder()
         enc.fit( yRaw )
         y = enc.transform( yRaw )
         y = np_utils.to_categorical( y )
 
+        # aggregate all features
+        x = np.zeros( (yRaw.shape[0], 0) )
+
+        # get continuous features
+        if config['datasetContinuousIndices']:
+            xContinuous = np.loadtxt( config['dataset'], delimiter=',',
+                                      usecols=config['datasetContinuousIndices'] )
+            x = np.concatenate( (x, xContinuous), axis=1 )
+
+        # get / encode categorical features
+        if config['datasetCategoricalIndices']:
+            for index in config['datasetCategoricalIndices']:
+                # load as raw string labels
+                xCategorical = np.loadtxt( config['dataset'], delimiter=',', dtype=np.str,
+                                           usecols=[index] )
+                # one-hot encoding
+                enc = LabelEncoder()
+                enc.fit( xCategorical )
+                xCategorical = enc.transform( xCategorical )  # int labels
+                xCategorical = np_utils.to_categorical( xCategorical )  # one-hot
+
+                # concat entire encoding
+                x = np.concatenate( (x, xCategorical), axis=1 )
+
         # setup model
         model = Sequential()
-        model.add( Dense( 8, input_dim=x.shape[1], activation='tanh' ) )
+        model.add( Dense( 64, input_dim=x.shape[1], activation='tanh' ) )
         model.add( Dense( y.shape[1], activation='sigmoid' ) )
 
         trainer = KerasTrainer( model, x, y )
+
+        trainer.configure( batchSize=config['batchSize'] )
 
 
     elif trainerType == 'ESTrainer'.lower():
