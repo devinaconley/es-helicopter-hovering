@@ -16,11 +16,16 @@ dependencies:
 - pybox2d=2.3.1post2=py35_0
 - pip:
   - box2d==2.3.1
+  - cycler==0.10.0
   - gym==0.8.1
   - keras==2.0.3
+  - matplotlib==2.1.1
   - numpy==1.12.1
   - protobuf==3.2.0
   - pyglet==1.2.4
+  - pyparsing==2.2.0
+  - python-dateutil==2.6.1
+  - pytz==2017.3
   - pyyaml==3.12
   - requests==2.13.0
   - scikit-learn==0.18.1
@@ -28,5 +33,6 @@ dependencies:
   - six==1.10.0
   - sklearn==0.0
   - tensorflow==1.0.1
+  - theano==1.0.1
 prefix: /home/devin/miniconda3/envs/es-meta
 
