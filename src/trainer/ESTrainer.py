@@ -50,7 +50,7 @@ class ESTrainer:
             self.render = render
 
     # Generic training interface
-    def train( self, iterations=100, params=[0.2, 0.0003], verbose=False, logFile=None ):
+    def train( self, iterations=100, params=[0.2, 0.0003], verbose=False ):
         # parse training parameters
         if len( params ) != 2:
             print( 'Invalid number of parameters' )
@@ -59,7 +59,7 @@ class ESTrainer:
         lr = params[1]
 
         # do training
-        totalReward = 0.0
+        rewards = []
         for i in range( iterations ):
             self.generatePopulation( sigma )
             self.testPopulation( sigma )
@@ -69,10 +69,7 @@ class ESTrainer:
                 print( 'Iteration: {}, average reward: {}, std reward: {}'.format(
                     i, np.mean( self.rewards ), np.std( self.rewards ) ) )
 
-            if logFile:
-                logFile.write( 'es,{},{}\n'.format( i, np.mean( self.rewards ) ) )
-
-            totalReward += np.mean( self.rewards )
+            rewards.append( np.mean( self.rewards ) )
 
             # show debug episode of updated model
             if self.render:
@@ -84,7 +81,7 @@ class ESTrainer:
                     action = self.model.predict_classes( np.array( [obs] ), verbose=0 )  # highest prob action from nn
                     obs, r, done, info = self.env.step( action[0] )
 
-        return totalReward / iterations
+        return rewards
 
     def testPopulation( self, sigma ):
         # test each variant over e episodes

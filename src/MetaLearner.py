@@ -20,6 +20,11 @@ class MetaLearner:
             print( 'Original parameter values must not be empty.' )
             return
 
+        # write logfile header
+        if logFile:
+            logFile.write( 'group,epoch,accuracy\n' )
+            logFile.flush()
+
         params = paramsOrig[:]
 
         for i in range( int( iterations / iterationsMeta ) ):
@@ -34,9 +39,28 @@ class MetaLearner:
 
                 # test, append to candidates
                 paramsTemp = [params[i] + noise[i] for i in range( len( params ) )]
-                reward = self.trainer.train( iterations=iterationsMeta, params=paramsTemp,
-                                             logFile=logFile, verbose=verbose )
+                rewards = self.trainer.train( iterations=iterationsMeta, params=paramsTemp,
+                                              verbose=verbose )
 
+                reward = np.mean( rewards )
+
+                # log and print as appropriate
+                strParams = ','.join( str( p ) for p in paramsTemp )
+
+                if logFile:
+                    for j, r in enumerate( rewards ):
+                        logFile.write( '{},{},{}\n'.format(
+                            i * population + len( cands ),
+                            i * iterationsMeta + j,
+                            reward
+                        ) )
+                    logFile.flush()
+
+                if verbose:
+                    print( 'candidate {} -- reward: {}, params: {}'.format(
+                        len( cands ), reward, strParams ) )
+
+                # store candidate
                 m = self.trainer.getModel()
                 cands.append( {
                     'reward': reward,
@@ -44,15 +68,6 @@ class MetaLearner:
                     'noise': noise,
                     'model': m
                 } )
-
-                # log and print as appropriate
-                strParams = ','.join( str( p ) for p in paramsTemp )
-                if logFile:
-                    logFile.write( 'meta-cand,{},{},{}\n'.format(
-                        (i + 1) * iterationsMeta, reward, strParams ) )
-                if verbose:
-                    print( 'candidate {} -- reward: {}, params: {}'.format(
-                        len( cands ), reward, strParams ) )
 
             # do updates
             meanReward = np.mean( [x['reward'] for x in cands] )  # to normalize
@@ -73,9 +88,6 @@ class MetaLearner:
 
             # log and print as appropriate
             strParams = ','.join( str( p ) for p in params )
-            if logFile:
-                logFile.write( 'meta-main,{},{},{}\n'.format(
-                    (i + 1) * iterationsMeta, bestReward, strParams ) )
             if verbose:
                 print( 'generations: {}, max reward: {}, params: {}'.format(
                     (i + 1) * iterationsMeta, bestReward, strParams ) )

@@ -35,7 +35,7 @@ class KerasTrainer:
         if batchSize:
             self.batchSize = batchSize
 
-    def train( self, iterations=100, params=[0.001], logFile=None, verbose=False ):
+    def train( self, iterations=100, params=[0.001], verbose=False ):
         # parse training parameters
         if len( params ) != 3:
             print( 'Invalid number of parameters' )
@@ -47,24 +47,9 @@ class KerasTrainer:
         # setup training
         adam = Adam( lr=lr, beta_1=b1, beta_2=b2, decay=0.0 )
         self.model.compile( loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'] )
-        cb = self._Callback( logFile )
 
         # do training
         res = self.model.fit( self.x, self.y, epochs=iterations, batch_size=self.batchSize,
-                              validation_split=self.validationSplit, callbacks=[cb], verbose=0 )
+                              validation_split=self.validationSplit, verbose=verbose )
 
-        meanAcc = sum( res.history['acc'] ) / iterations
-
-        if verbose:
-            print( 'Params: {}, accuracy: {}'.format( params, meanAcc ) )
-
-        return meanAcc
-
-    class _Callback( Callback ):
-        def __init__( self, logFile=None ):
-            self.logFile = logFile
-
-        def on_epoch_end( self, epoch, logs=None ):
-            if self.logFile:
-                self.logFile.write( 'nn,{},{}\n'.format( epoch, logs['acc'] ) )
-            return
+        return res.history['acc']

@@ -97,9 +97,9 @@ def main():
 
     # do training
     if config['runESMeta']:
-        # Meta-Learning
+        # es for meta-Learning
         metalearner = MetaLearner( trainer )
-        with open( 'etc/results/{}_{}_metalearner.log'.format( ts, trainerType ), 'w' ) as logFile:
+        with open( 'etc/results/{}_{}_metalearner.csv'.format( ts, trainerType ), 'w' ) as logFile:
             metalearner.train( logFile=logFile,
                                paramsOrig=config['paramInitials'],
                                sigmas=config['paramSigmas'],
@@ -109,16 +109,23 @@ def main():
                                verbose=True )
 
     elif config['runGridMeta']:
-        # Compare with grid search
-        perms = itertools.product( *config['gridValues'] )
+        # compare with grid search
+        perms = itertools.product( *config['paramGrid'] )
         model = trainer.getModel()
-        with open( 'etc/results/{}_{}_gridsearch.log'.format( ts, trainerType ), 'w' ) as logFile:
-            for p in perms:
+        with open( 'etc/results/{}_{}_gridsearch.csv'.format( ts, trainerType ), 'w' ) as logFile:
+            # setup header
+            logFile.write( 'group,epoch,accuracy\n' )
+            logFile.flush()
+
+            for i, p in enumerate( perms ):
                 trainer.setModel( model )
-                trainer.train( params=p,
-                               iterations=config['iterations'],
-                               logFile=logFile,
-                               verbose=True )
+                rewards = trainer.train( params=p,
+                                         iterations=config['iterations'],
+                                         verbose=True )
+                for j, r in enumerate( rewards ):
+                    logFile.write( '{},{},{}\n'.format( i, j, r ) )
+                logFile.flush()
+
 
     else:
         # train with no metalearning
