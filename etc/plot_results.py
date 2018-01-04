@@ -3,16 +3,30 @@
 # lib
 import argparse
 import csv
-import matplotlib
+import matplotlib.pyplot as plt
+
 
 def main():
     args = parseArguments()
 
-    if args['es_results'] :
-        with open( args['es_results']) as file :
-            reader = csv.reader(file, delimiter=',' )
-            for line in reader :
-                print( line )
+    with open( args['results'] ) as file:
+        reader = csv.DictReader( file, delimiter=',' )
+        groups = {}
+        for line in reader:
+            g = line['group']
+            if g in groups:
+                groups[g]['x'].append( float( line['epoch'] ) )
+                groups[g]['y'].append( float( line['accuracy'] ) )
+            else:
+                groups[g] = {
+                    'x': [float( line['epoch'] )],
+                    'y': [float( line['accuracy'] )]
+                }
+
+        for id, group in groups.items():
+            plt.plot( group['x'], group['y'] )
+
+        plt.show()
 
 
 # command line arguments
@@ -25,8 +39,8 @@ def parseArguments():
     # parse arguments and validate
     args = vars( parser.parse_args() )
 
-    if args['es_results'] is None and args['grid_results'] is None:
-        parser.error( 'Some results must be provided.' )
+    if args['results'] is None:
+        parser.error( 'Results file must be provided.' )
 
     return args
 

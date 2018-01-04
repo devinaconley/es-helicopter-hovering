@@ -52,7 +52,7 @@ class MetaLearner:
                         logFile.write( '{},{},{}\n'.format(
                             i * population + len( cands ),
                             i * iterationsMeta + j,
-                            reward
+                            r
                         ) )
                     logFile.flush()
 
