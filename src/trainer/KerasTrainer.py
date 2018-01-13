@@ -6,6 +6,8 @@
 from keras.models import model_from_json
 from keras.callbacks import Callback
 from keras.optimizers import SGD, Adam
+from collections import Counter
+import numpy as np
 
 
 class KerasTrainer:
@@ -17,6 +19,7 @@ class KerasTrainer:
         # default config
         self.batchSize = 1
         self.validationSplit = 0.0  # if nonzero, will do ES based on validation accuracy
+        self.balanceClasses = True
 
     def getModel( self ):
         # return deep copy
@@ -29,11 +32,13 @@ class KerasTrainer:
         self.model = model_from_json( model.to_json() )
         self.model.set_weights( model.get_weights() )
 
-    def configure( self, validationSplit=None, batchSize=None ):
+    def configure( self, validationSplit=None, batchSize=None, balanceClasses=None ):
         if validationSplit:
             self.validationSplit = validationSplit
         if batchSize:
             self.batchSize = batchSize
+        if balanceClasses:
+            self.balanceClasses = balanceClasses
 
     def train( self, iterations=100, params=[0.001], verbose=False ):
         # parse training parameters
@@ -47,9 +52,15 @@ class KerasTrainer:
         # setup training
         adam = Adam( lr=lr, beta_1=b1, beta_2=b2, decay=0.0 )
         self.model.compile( loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'] )
+        if self.balanceClasses:
+            counts = np.sum( self.y, axis=0 )
+            maxCount = max( counts )
+            classWeights = {i: float( maxCount ) / float( c ) for i, c in enumerate( counts )}
+            print( classWeights )
 
         # do training
         res = self.model.fit( self.x, self.y, epochs=iterations, batch_size=self.batchSize,
-                              validation_split=self.validationSplit, verbose=verbose )
+                              validation_split=self.validationSplit, verbose=verbose,
+                              class_weight=classWeights )
 
         return res.history['acc']
