@@ -51,16 +51,19 @@ class KerasTrainer:
 
         # setup training
         adam = Adam( lr=lr, beta_1=b1, beta_2=b2, decay=0.0 )
-        self.model.compile( loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'] )
+        self.model.compile( loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'],
+                            weighted_metrics=['accuracy'] )
         if self.balanceClasses:
-            counts = np.sum( self.y, axis=0 )
+            labels, counts = np.unique( self.y, return_counts=True, axis=0 )
             maxCount = max( counts )
-            classWeights = {i: float( maxCount ) / float( c ) for i, c in enumerate( counts )}
-            print( classWeights )
+            labelWeights = {tuple( l ): float( maxCount ) / float( c ) for l, c in zip( labels, counts )}
+            sampleWeights = np.apply_along_axis( lambda x: labelWeights[tuple( x )], 1, self.y )
+        else :
+            sampleWeights = None
 
         # do training
         res = self.model.fit( self.x, self.y, epochs=iterations, batch_size=self.batchSize,
                               validation_split=self.validationSplit, verbose=verbose,
-                              class_weight=classWeights )
+                              sample_weight=sampleWeights )
 
         return res.history['acc']
