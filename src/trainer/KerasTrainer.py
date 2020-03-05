@@ -40,6 +40,7 @@ class KerasTrainer:
         if balanceClasses:
             self.balanceClasses = balanceClasses
 
+
     def train( self, iterations=100, params=[0.001], verbose=False ):
         # parse training parameters
         if len( params ) != 3:
@@ -58,7 +59,7 @@ class KerasTrainer:
             maxCount = max( counts )
             labelWeights = {tuple( l ): float( maxCount ) / float( c ) for l, c in zip( labels, counts )}
             sampleWeights = np.apply_along_axis( lambda x: labelWeights[tuple( x )], 1, self.y )
-        else :
+        else:
             sampleWeights = None
 
         # do training

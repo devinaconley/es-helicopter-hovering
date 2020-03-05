@@ -69,6 +69,7 @@ def main():
         # setup model
         model = Sequential()
         model.add( Dense( 64, input_dim=x.shape[1], activation='tanh' ) )
+        # model.add( Dense( 64, activation='tanh' ) )
         model.add( Dense( y.shape[1], activation='sigmoid' ) )
 
         trainer = KerasTrainer( model, x, y )
@@ -106,6 +107,7 @@ def main():
                                population=config['population'],
                                iterations=config['iterations'],
                                iterationsMeta=config['iterationsMeta'],
+                               lr=0.01,
                                verbose=True )
 
     elif config['runGridMeta']:

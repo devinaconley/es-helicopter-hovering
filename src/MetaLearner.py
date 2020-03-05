@@ -74,15 +74,20 @@ class MetaLearner:
             stdReward = np.std( [x['reward'] for x in cands] )
             bestReward = cands[0]['reward']
             bestModel = cands[0]['model']
+            updates = [0.0 for p in params]
             for c in cands:
                 if c['reward'] > bestReward:
                     bestReward = c['reward']
                     bestModel = c['model']
                 # weighted update of all params
                 for j in range( len( params ) ):
-                    params[j] += ((lr / (sigmas[j] * population))
-                                  * ((c['reward'] - meanReward) / stdReward)
-                                  * c['noise'][j])
+                    updates[j] += ((lr / (sigmas[j] * population))
+                                   * ((c['reward'] - meanReward) / stdReward)
+                                   * c['noise'][j])
+
+            # bounded param updates
+            for j in range( len( params ) ):
+                params[j] += max( -2.0*sigmas[j], min( updates[j], 2.0*sigmas[j] ) )
 
             self.model = bestModel
 
